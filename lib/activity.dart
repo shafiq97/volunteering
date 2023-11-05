@@ -16,8 +16,9 @@ class _ActivityPageState extends State<ActivityPage> {
 
   @override
   Widget build(BuildContext context) {
-    CollectionReference events =
-        FirebaseFirestore.instance.collection('events');
+    Query eventsQuery = FirebaseFirestore.instance
+        .collection('events')
+        .where('approved', isEqualTo: true);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Activity Page')),
@@ -39,7 +40,7 @@ class _ActivityPageState extends State<ActivityPage> {
             ),
             Expanded(
               child: StreamBuilder(
-                stream: events.snapshots(),
+                stream: eventsQuery.snapshots(),
                 builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                   if (snapshot.hasError) {
                     return const Text('Something went wrong');
