@@ -19,14 +19,14 @@ class _ActivityPageState extends State<ActivityPage> {
         FirebaseFirestore.instance.collection('events');
 
     return Scaffold(
-      appBar: AppBar(title: Text('Activity Page')),
+      appBar: AppBar(title: const Text('Activity Page')),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
             TextField(
               controller: _searchController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Search Events',
                 suffixIcon: Icon(Icons.search),
               ),
@@ -41,10 +41,10 @@ class _ActivityPageState extends State<ActivityPage> {
                 stream: events.snapshots(),
                 builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                   if (snapshot.hasError) {
-                    return Text('Something went wrong');
+                    return const Text('Something went wrong');
                   }
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
+                    return const Center(child: CircularProgressIndicator());
                   }
                   var filteredDocs = snapshot.data!.docs.where((doc) {
                     return doc['activityName']
@@ -80,45 +80,47 @@ class EventTile extends StatelessWidget {
   final String title;
   final String description;
   final String date;
-  final String imageUrl;
+  final String? imageUrl; // imageUrl can be null
 
   EventTile({
     required this.eventId,
     required this.title,
     required this.description,
     required this.date,
-    required this.imageUrl,
+    this.imageUrl, // imageUrl is now optional
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.symmetric(vertical: 8.0),
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
-            Image.network(
-              imageUrl,
-              height: 100,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-            SizedBox(height: 10),
+            // Check if imageUrl is null before trying to load it
+            if (imageUrl != null) // Only display image if the URL is not null
+              Image.network(
+                imageUrl!,
+                height: 100,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            const SizedBox(height: 10),
             Text(
               title,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 5),
+            const SizedBox(height: 5),
             Text(description),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text('Date: $date'),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
                 _showRegistrationDialog(context, eventId, title);
               },
-              child: Text('Register here'),
+              child: const Text('Register here'),
             ),
           ],
         ),
@@ -143,24 +145,24 @@ void _showRegistrationDialog(
             children: <Widget>[
               TextField(
                 controller: nameController,
-                decoration: InputDecoration(hintText: "Enter your name"),
+                decoration: const InputDecoration(hintText: "Enter your name"),
               ),
               TextField(
                 controller: emailController,
-                decoration: InputDecoration(hintText: "Enter your email"),
+                decoration: const InputDecoration(hintText: "Enter your email"),
               ),
             ],
           ),
         ),
         actions: <Widget>[
           TextButton(
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
             onPressed: () {
               Navigator.of(context).pop();
             },
           ),
           TextButton(
-            child: Text('Register'),
+            child: const Text('Register'),
             onPressed: () {
               _registerForEvent(
                   eventId, nameController.text, emailController.text, context);
