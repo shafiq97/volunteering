@@ -3,7 +3,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-class ActivityPage extends StatelessWidget {
+class ActivityPage extends StatefulWidget {
+  @override
+  _ActivityPageState createState() => _ActivityPageState();
+}
+
+class _ActivityPageState extends State<ActivityPage> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchString = '';
+
   @override
   Widget build(BuildContext context) {
     // Create a reference to the events collection
@@ -14,35 +22,53 @@ class ActivityPage extends StatelessWidget {
       appBar: AppBar(title: Text('Activity Page')),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
-        // Use a StreamBuilder to listen to live updates from Firestore
-        child: StreamBuilder(
-          stream: events.snapshots(),
-          builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-            if (snapshot.hasError) {
-              return Text('Something went wrong');
-            }
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
-            }
-            // Map the documents to widgets
-            return ListView(
-              children: snapshot.data!.docs.map((DocumentSnapshot document) {
-                Map<String, dynamic> data =
-                    document.data()! as Map<String, dynamic>;
-                DateTime startDate = DateTime.parse(data['startDate']);
-
-                return EventTile(
-                  eventId: document.id,
-                  title: data['activityName'],
-                  description: data['description'],
-                  date: DateFormat('dd MMM yyyy')
-                      .format(startDate), // Format the date as you need
-                  imageUrl: data[
-                      'posterUrl'], // Assuming 'posterUrl' is stored in the document
-                );
-              }).toList(),
-            );
-          },
+        child: Column(
+          children: [
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                labelText: 'Search Events',
+                suffixIcon: Icon(Icons.search),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchString = value.toLowerCase();
+                });
+              },
+            ),
+            Expanded(
+              child: StreamBuilder(
+                stream: events.snapshots(),
+                builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                  if (snapshot.hasError) {
+                    return Text('Something went wrong');
+                  }
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                  var filteredDocs = snapshot.data!.docs.where((doc) {
+                    return doc['activityName']
+                        .toLowerCase()
+                        .contains(_searchString);
+                  }).toList();
+                  return ListView(
+                    children: filteredDocs.map((DocumentSnapshot document) {
+                      Map<String, dynamic> data =
+                          document.data()! as Map<String, dynamic>;
+                      DateTime startDate = DateTime.parse(data['startDate']);
+                      return EventTile(
+                        eventId: document.id,
+                        title: data['activityName'],
+                        description: data['description'],
+                        date: DateFormat('dd MMM yyyy').format(startDate),
+                        imageUrl: data['posterUrl'],
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -90,8 +116,7 @@ class EventTile extends StatelessWidget {
             SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
-                _showRegistrationDialog(
-                    context, eventId, title); // Pass the event ID and title
+                _showRegistrationDialog(context, eventId, title);
               },
               child: Text('Register here'),
             ),
@@ -109,7 +134,7 @@ void _showRegistrationDialog(
 
   showDialog(
     context: context,
-    barrierDismissible: false, // User must tap button to close the dialog
+    barrierDismissible: false,
     builder: (BuildContext context) {
       return AlertDialog(
         title: Text('Register for $title'),
@@ -152,30 +177,30 @@ void _registerForEvent(
     String eventId, String name, String email, BuildContext context) {
   CollectionReference registrations =
       FirebaseFirestore.instance.collection('registrations');
-
-  // Add the registration
   registrations.add({
     'eventId': eventId,
     'name': name,
     'email': email,
-    'registeredAt': FieldValue.serverTimestamp(), // Sets the server timestamp
+    'registeredAt': FieldValue.serverTimestamp(),
   }).then((value) {
     Fluttertoast.showToast(
-        msg: "User Registered",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.green,
-        textColor: Colors.white,
-        fontSize: 16.0);
+      msg: "User Registered",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.CENTER,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Colors.green,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
   }).catchError((error) {
     Fluttertoast.showToast(
-        msg: "Failed to register user: $error",
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0);
+      msg: "Failed to register user: $error",
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.CENTER,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
   });
 }
