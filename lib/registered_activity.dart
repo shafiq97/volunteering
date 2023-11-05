@@ -16,7 +16,6 @@ class _RegisteredActivityState extends State<RegisteredActivity> {
 
   @override
   Widget build(BuildContext context) {
-    // Reference to the registrations collection filtered by current user ID
     Query registrationsQuery = FirebaseFirestore.instance
         .collection('registrations')
         .where('userId', isEqualTo: user?.uid);
@@ -54,13 +53,11 @@ class _RegisteredActivityState extends State<RegisteredActivity> {
                           .toList() ??
                       [];
 
-                  // If there are no event IDs, return a message or empty container
                   if (eventIds.isEmpty) {
                     return const Center(
                         child: Text('No registered events found.'));
                   }
 
-                  // Build a list of EventTiles for each registered event
                   return StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
                         .collection('events')
@@ -74,6 +71,7 @@ class _RegisteredActivityState extends State<RegisteredActivity> {
                           ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       }
+
                       var filteredDocs = eventSnapshot.data?.docs.where((doc) {
                             return doc['activityName']
                                 .toLowerCase()
@@ -149,7 +147,7 @@ class EventTile extends StatelessWidget {
             const SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
-                _showRegistrationDialog(context, eventId, title);
+                _showRatingDialog(context, eventId, title);
               },
               child: const Text('Rate'),
             ),
@@ -160,30 +158,25 @@ class EventTile extends StatelessWidget {
   }
 }
 
-void _showRegistrationDialog(
-    BuildContext context, String eventId, String title) {
-  TextEditingController nameController = TextEditingController();
-  TextEditingController emailController = TextEditingController();
+void _showRatingDialog(BuildContext context, String eventId, String title) {
+  final TextEditingController ratingController = TextEditingController();
 
   showDialog(
     context: context,
-    barrierDismissible: false,
+    barrierDismissible: true,
     builder: (BuildContext context) {
       return AlertDialog(
-        title: Text('Register for $title'),
-        content: SingleChildScrollView(
-          child: ListBody(
-            children: <Widget>[
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(hintText: "Enter your name"),
-              ),
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(hintText: "Enter your email"),
-              ),
-            ],
-          ),
+        title: Text('Rate $title'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text('Enter your rating (1-5):'),
+            TextField(
+              controller: ratingController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(hintText: "Rating"),
+            ),
+          ],
         ),
         actions: <Widget>[
           TextButton(
@@ -193,11 +186,23 @@ void _showRegistrationDialog(
             },
           ),
           TextButton(
-            child: const Text('Register'),
+            child: const Text('Submit'),
             onPressed: () {
-              _registerForEvent(
-                  eventId, nameController.text, emailController.text, context);
-              Navigator.of(context).pop();
+              int? rating = int.tryParse(ratingController.text);
+              if (rating != null && rating > 0 && rating <= 5) {
+                _submitRating(eventId, rating, context);
+                Navigator.of(context).pop();
+              } else {
+                Fluttertoast.showToast(
+                  msg: "Please enter a valid rating between 1 and 5.",
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.CENTER,
+                  timeInSecForIosWeb: 1,
+                  backgroundColor: Colors.red,
+                  textColor: Colors.white,
+                  fontSize: 16.0,
+                );
+              }
             },
           ),
         ],
@@ -206,31 +211,38 @@ void _showRegistrationDialog(
   );
 }
 
-void _registerForEvent(
-    String eventId, String name, String email, BuildContext context) {
-  CollectionReference registrations =
-      FirebaseFirestore.instance.collection('registrations');
+void _submitRating(String eventId, int rating, BuildContext context) {
+  final User? user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    DocumentReference eventDoc =
+        FirebaseFirestore.instance.collection('events').doc(eventId);
 
-  registrations.add({
-    'eventId': eventId,
-    'userId':
-        FirebaseAuth.instance.currentUser?.uid, // Add the current user's ID
-    'name': name,
-    'email': email,
-    'registeredAt': FieldValue.serverTimestamp(),
-  }).then((value) {
+    eventDoc.set({
+      'ratings': {user.uid: rating}
+    }, SetOptions(merge: true)).then((value) {
+      Fluttertoast.showToast(
+        msg: "Rating Submitted",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    }).catchError((error) {
+      Fluttertoast.showToast(
+        msg: "Failed to submit rating: $error",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    });
+  } else {
     Fluttertoast.showToast(
-      msg: "User Registered",
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.CENTER,
-      timeInSecForIosWeb: 1,
-      backgroundColor: Colors.green,
-      textColor: Colors.white,
-      fontSize: 16.0,
-    );
-  }).catchError((error) {
-    Fluttertoast.showToast(
-      msg: "Failed to register user: $error",
+      msg: "No user signed in",
       toastLength: Toast.LENGTH_LONG,
       gravity: ToastGravity.CENTER,
       timeInSecForIosWeb: 1,
@@ -238,5 +250,5 @@ void _registerForEvent(
       textColor: Colors.white,
       fontSize: 16.0,
     );
-  });
+  }
 }

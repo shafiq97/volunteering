@@ -15,7 +15,6 @@ class _ActivityPageState extends State<ActivityPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Create a reference to the events collection
     CollectionReference events =
         FirebaseFirestore.instance.collection('events');
 
@@ -52,19 +51,24 @@ class _ActivityPageState extends State<ActivityPage> {
                         .toLowerCase()
                         .contains(_searchString);
                   }).toList();
-                  return ListView(
-                    children: filteredDocs.map((DocumentSnapshot document) {
+                  return ListView.builder(
+                    itemCount: filteredDocs.length,
+                    itemBuilder: (context, index) {
+                      DocumentSnapshot document = filteredDocs[index];
                       Map<String, dynamic> data =
                           document.data()! as Map<String, dynamic>;
                       DateTime startDate = DateTime.parse(data['startDate']);
+                      double averageRating =
+                          _calculateAverageRating(data['ratings']);
                       return EventTile(
                         eventId: document.id,
                         title: data['activityName'],
                         description: data['description'],
                         date: DateFormat('dd MMM yyyy').format(startDate),
                         imageUrl: data['posterUrl'],
+                        rating: averageRating,
                       );
-                    }).toList(),
+                    },
                   );
                 },
               ),
@@ -74,6 +78,17 @@ class _ActivityPageState extends State<ActivityPage> {
       ),
     );
   }
+
+  double _calculateAverageRating(Map<String, dynamic>? ratings) {
+    if (ratings == null || ratings.isEmpty) {
+      return 0.0;
+    }
+    double totalRating = 0.0;
+    ratings.forEach((key, value) {
+      totalRating += value;
+    });
+    return totalRating / ratings.length;
+  }
 }
 
 class EventTile extends StatelessWidget {
@@ -81,15 +96,32 @@ class EventTile extends StatelessWidget {
   final String title;
   final String description;
   final String date;
-  final String? imageUrl; // imageUrl can be null
+  final String? imageUrl;
+  final double rating;
 
   EventTile({
     required this.eventId,
     required this.title,
     required this.description,
     required this.date,
-    this.imageUrl, // imageUrl is now optional
+    this.imageUrl,
+    required this.rating,
   });
+
+  List<Widget> buildStars(double rating) {
+    List<Widget> stars = [];
+    int fullStars = rating.floor();
+    for (int i = 0; i < fullStars; i++) {
+      stars.add(const Icon(Icons.star, color: Colors.amber));
+    }
+    if (rating - fullStars >= 0.5) {
+      stars.add(const Icon(Icons.star_half, color: Colors.amber));
+    }
+    for (int i = fullStars + (rating - fullStars >= 0.5 ? 1 : 0); i < 5; i++) {
+      stars.add(const Icon(Icons.star_border, color: Colors.amber));
+    }
+    return stars;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,8 +131,7 @@ class EventTile extends StatelessWidget {
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
-            // Check if imageUrl is null before trying to load it
-            if (imageUrl != null) // Only display image if the URL is not null
+            if (imageUrl != null)
               Image.network(
                 imageUrl!,
                 height: 100,
@@ -116,6 +147,11 @@ class EventTile extends StatelessWidget {
             Text(description),
             const SizedBox(height: 10),
             Text('Date: $date'),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: buildStars(rating),
+            ),
             const SizedBox(height: 10),
             ElevatedButton(
               onPressed: () {
@@ -178,23 +214,20 @@ void _showRegistrationDialog(
 
 void _registerForEvent(
     String eventId, String name, String email, BuildContext context) {
-  // Obtain the current user from FirebaseAuth
   User? user = FirebaseAuth.instance.currentUser;
 
-  // Check if the user is not null
   if (user != null) {
-    String userId = user.uid; // This is the user ID you need
+    String userId = user.uid;
 
     CollectionReference registrations =
         FirebaseFirestore.instance.collection('registrations');
 
-    // Add the registration with the user ID
     registrations.add({
       'eventId': eventId,
       'name': name,
       'email': email,
       'registeredAt': FieldValue.serverTimestamp(),
-      'userId': userId, // Include the user ID in the registration document
+      'userId': userId,
     }).then((value) {
       Fluttertoast.showToast(
         msg: "User Registered",
@@ -217,7 +250,6 @@ void _registerForEvent(
       );
     });
   } else {
-    // Handle the case where there is no user signed in
     Fluttertoast.showToast(
       msg: "No user signed in",
       toastLength: Toast.LENGTH_LONG,
