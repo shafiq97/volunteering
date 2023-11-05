@@ -107,6 +107,13 @@ class EventTile extends StatelessWidget {
     this.imageUrl,
     required this.rating,
   });
+  Future<int> _getNumberOfRegistrations(String eventId) async {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection('registrations')
+        .where('eventId', isEqualTo: eventId)
+        .get();
+    return querySnapshot.docs.length;
+  }
 
   List<Widget> buildStars(double rating) {
     List<Widget> stars = [];
@@ -148,6 +155,18 @@ class EventTile extends StatelessWidget {
             const SizedBox(height: 10),
             Text('Date: $date'),
             const SizedBox(height: 10),
+            FutureBuilder<int>(
+              future: _getNumberOfRegistrations(eventId),
+              builder: (BuildContext context, AsyncSnapshot<int> snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Text('Loading...');
+                }
+                if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                }
+                return Text('Registrations: ${snapshot.data}');
+              },
+            ),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: buildStars(rating),
