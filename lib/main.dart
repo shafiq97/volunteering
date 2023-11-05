@@ -1,4 +1,5 @@
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -80,12 +81,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.add_circle),
-              title: const Text('Create Activity'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => CreateEventPage()),
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              onTap: () async {
+                await FirebaseAuth.instance.signOut(); // This logs the user out
+                // Navigate to the login page and remove all routes below from the stack
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => LoginPage()),
+                  ModalRoute.withName('/'),
                 );
               },
             ),
