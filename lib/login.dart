@@ -1,5 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:volunteering/admin.dart';
 import 'package:volunteering/main.dart';
 import 'package:volunteering/register.dart';
 
@@ -14,6 +16,36 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   String _errorMessage = '';
 
+  void checkUserRoleAndNavigate(BuildContext context, User user) async {
+    // Assuming you have a collection named 'users' where each document ID is the user's uid
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+
+    if (userDoc.exists) {
+      Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;
+      // Assuming the user's document contains a field 'role' that holds the role of the user
+      String role = data['role'];
+      if (role == 'admin') {
+        // If the user is an admin, navigate to the AdminActivityPage
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => AdminActivityPage()),
+        );
+      } else {
+        // If the user is not an admin, navigate to the HomeScreen
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => HomeScreen()),
+        );
+      }
+    } else {
+      // Handle the case where the user document does not exist in Firestore
+      // This might mean the user is not registered or there's an error
+    }
+  }
+
   Future<void> _login() async {
     try {
       final String email = _emailController.text.trim();
@@ -25,10 +57,7 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (userCredential.user != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
-        );
+        checkUserRoleAndNavigate(context, userCredential.user!);
       }
     } catch (e) {
       setState(() {
@@ -51,15 +80,15 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Login'),
+        title: const Text('Login'),
       ),
       backgroundColor: Colors.pink,
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
+            const Text(
               'Volunteer App',
               style: TextStyle(
                 fontSize: 36, // Adjust the font size as needed
@@ -67,41 +96,43 @@ class _LoginPageState extends State<LoginPage> {
                 color: Colors.white,
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             TextField(
               controller: _emailController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Email',
                 labelStyle:
                     TextStyle(color: Colors.white), // Set label text color
               ),
-              style: TextStyle(color: Colors.white), // Set input text color
+              style:
+                  const TextStyle(color: Colors.white), // Set input text color
             ),
             TextField(
               controller: _passwordController,
               obscureText: true,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Password',
                 labelStyle:
                     TextStyle(color: Colors.white), // Set label text color
               ),
-              style: TextStyle(color: Colors.white), // Set input text color
+              style:
+                  const TextStyle(color: Colors.white), // Set input text color
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _login,
-              child: Text('Login'),
+              child: const Text('Login'),
             ),
             if (_errorMessage.isNotEmpty)
               Text(
                 _errorMessage,
-                style: TextStyle(color: Colors.red),
+                style: const TextStyle(color: Colors.red),
               ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             GestureDetector(
               onTap:
                   _navigateToRegisterPage, // Navigate to the registration page
-              child: Text(
+              child: const Text(
                 'Register', // This is your "Register" link
                 style: TextStyle(
                   color: Colors.white,
