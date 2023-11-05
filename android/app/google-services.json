@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "278501172745",
+    "project_id": "volunteerapp-2f55a",
+    "storage_bucket": "volunteerapp-2f55a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:278501172745:android:517133be2e37b9c2b2bad8",
+        "android_client_info": {
+          "package_name": "com.example.fdapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCf040IkTNnFIvJ7MnXhm6C_fOfyx-c_74"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:278501172745:android:6116f68804987618b2bad8",
+        "android_client_info": {
+          "package_name": "com.example.volunteering"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCf040IkTNnFIvJ7MnXhm6C_fOfyx-c_74"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
