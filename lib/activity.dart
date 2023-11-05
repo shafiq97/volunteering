@@ -62,6 +62,9 @@ class _ActivityPageState extends State<ActivityPage> {
                       DateTime startDate = DateTime.parse(data['startDate']);
                       double averageRating =
                           _calculateAverageRating(data['ratings']);
+                      String urgency = data['urgency'] ??
+                          'Not specified'; // Get the urgency, default to 'Not specified'
+
                       return EventTile(
                         eventId: document.id,
                         title: data['activityName'],
@@ -69,6 +72,7 @@ class _ActivityPageState extends State<ActivityPage> {
                         date: DateFormat('dd MMM yyyy').format(startDate),
                         imageUrl: data['posterUrl'],
                         rating: averageRating,
+                        urgency: urgency,
                       );
                     },
                   );
@@ -100,6 +104,7 @@ class EventTile extends StatelessWidget {
   final String date;
   final String? imageUrl;
   final double rating;
+  final String urgency;
 
   EventTile({
     required this.eventId,
@@ -108,6 +113,7 @@ class EventTile extends StatelessWidget {
     required this.date,
     this.imageUrl,
     required this.rating,
+    required this.urgency, // Include urgency in the constructor
   });
   Future<int> _getNumberOfRegistrations(String eventId) async {
     QuerySnapshot querySnapshot = await FirebaseFirestore.instance
@@ -152,6 +158,8 @@ class EventTile extends StatelessWidget {
               title,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
+            const SizedBox(height: 5),
+            Text('Urgency: $urgency'), // Display urgency
             const SizedBox(height: 5),
             Text(description),
             const SizedBox(height: 10),
