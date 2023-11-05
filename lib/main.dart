@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -58,6 +59,18 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<String> _getUserRole() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      return userDoc['role'] ?? 'volunteer';
+    }
+    return 'volunteer';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -96,14 +109,31 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       body: _pages[_selectedIndex], // Display the selected page
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => CreateEventPage()),
-          );
+      floatingActionButton: FutureBuilder<String>(
+        future: _getUserRole(), // here we get the role of the user
+        builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            // You can show a loading indicator while waiting for the data
+            return SizedBox();
+          } else if (snapshot.hasError) {
+            // If we run into an error, we can handle it here
+            return SizedBox();
+          } else if (snapshot.data == 'organizer') {
+            // Only show the FAB if the role is organizer
+            return FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CreateEventPage()),
+                );
+              },
+              child: Icon(Icons.add),
+            );
+          } else {
+            // Return an empty container if the user is not an organizer
+            return SizedBox();
+          }
         },
-        child: Icon(Icons.add),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const [
