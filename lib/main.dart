@@ -9,6 +9,7 @@ import 'package:volunteering/activity_registration.dart';
 import 'package:volunteering/firebase_options.dart';
 import 'package:volunteering/login.dart';
 import 'package:volunteering/profile.dart';
+import 'package:volunteering/registered_activity.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -92,6 +93,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   fontSize: 24,
                 ),
               ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.app_registration),
+              title: const Text('Registered Event'),
+              onTap: () async {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => RegisteredActivity()),
+                );
+              },
             ),
             ListTile(
               leading: const Icon(Icons.logout),
