@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:intl/intl.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -232,7 +233,7 @@ void _showRegistrationDialog(
 }
 
 void _registerForEvent(
-    String eventId, String name, String email, BuildContext context) {
+    String eventId, String name, String email, BuildContext context) async {
   User? user = FirebaseAuth.instance.currentUser;
 
   if (user != null) {
@@ -241,13 +242,13 @@ void _registerForEvent(
     CollectionReference registrations =
         FirebaseFirestore.instance.collection('registrations');
 
-    registrations.add({
+    await registrations.add({
       'eventId': eventId,
       'name': name,
       'email': email,
       'registeredAt': FieldValue.serverTimestamp(),
       'userId': userId,
-    }).then((value) {
+    }).then((value) async {
       Fluttertoast.showToast(
         msg: "User Registered",
         toastLength: Toast.LENGTH_SHORT,
@@ -257,6 +258,15 @@ void _registerForEvent(
         textColor: Colors.white,
         fontSize: 16.0,
       );
+      // Prompt user to send an email
+      final Email emailToSend = Email(
+        body: 'Thank you for registering for the event!',
+        subject: 'Event Registration Confirmation',
+        recipients: [user.email!], // Send to the current user's email
+        isHTML: false,
+      );
+
+      await FlutterEmailSender.send(emailToSend);
     }).catchError((error) {
       Fluttertoast.showToast(
         msg: "Failed to register user: $error",
