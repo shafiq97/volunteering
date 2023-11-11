@@ -73,6 +73,7 @@ class _ActivityPageState extends State<ActivityPage> {
                         imageUrl: data['posterUrl'],
                         rating: averageRating,
                         urgency: urgency,
+                        organizerEmail: data['organizerEmail'],
                       );
                     },
                   );
@@ -105,16 +106,17 @@ class EventTile extends StatelessWidget {
   final String? imageUrl;
   final double rating;
   final String urgency;
+  final String organizerEmail;
 
-  EventTile({
-    required this.eventId,
-    required this.title,
-    required this.description,
-    required this.date,
-    this.imageUrl,
-    required this.rating,
-    required this.urgency, // Include urgency in the constructor
-  });
+  EventTile(
+      {required this.eventId,
+      required this.title,
+      required this.description,
+      required this.date,
+      this.imageUrl,
+      required this.rating,
+      required this.urgency,
+      required this.organizerEmail});
   Future<int> _getNumberOfRegistrations(String eventId) async {
     QuerySnapshot querySnapshot = await FirebaseFirestore.instance
         .collection('registrations')
@@ -268,14 +270,15 @@ void _registerForEvent(
         fontSize: 16.0,
       );
       // Prompt user to send an email
-      final Email emailToSend = Email(
-        body: 'Thank you for registering for the event!',
-        subject: 'Event Registration Confirmation',
-        recipients: [user.email!], // Send to the current user's email
-        isHTML: false,
+      Fluttertoast.showToast(
+        msg: "Email sent to your email address ${user.email}",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+        fontSize: 16.0,
       );
-
-      await FlutterEmailSender.send(emailToSend);
     }).catchError((error) {
       Fluttertoast.showToast(
         msg: "Failed to register user: $error",

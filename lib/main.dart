@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // List of pages/screens for each tab
   final List<Widget> _pages = [
-    ActivityPage(),
+    RegisteredActivity(),
     ActivityPage(),
     ProfilePage(),
     CreateEventPage(),

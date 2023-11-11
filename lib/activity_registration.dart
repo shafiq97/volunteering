@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -281,6 +282,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                     }
 
                     // Create an Event object
+                    User? user = FirebaseAuth.instance.currentUser;
                     Event event = Event(
                       activityName: _activityName,
                       description: _description,
@@ -293,6 +295,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                       numVolunteers: _numVolunteers ?? 0,
                       approvalLetter: _approvalLetter,
                       posterUrl: posterUrl,
+                      organizerEmail: user!.email,
                     );
 
                     // Save the event to Firestore

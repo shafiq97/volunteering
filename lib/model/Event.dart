@@ -11,21 +11,22 @@ class Event {
   String activityType;
   int numVolunteers;
   String approvalLetter;
-  String? posterUrl; // This will store the URL of the uploaded image
+  String? posterUrl;
+  String? organizerEmail;
 
-  Event({
-    required this.activityName,
-    required this.description,
-    required this.startDate,
-    required this.endDate,
-    required this.time,
-    required this.venue,
-    required this.urgency,
-    required this.activityType,
-    required this.numVolunteers,
-    required this.approvalLetter,
-    this.posterUrl,
-  });
+  Event(
+      {required this.activityName,
+      required this.description,
+      required this.startDate,
+      required this.endDate,
+      required this.time,
+      required this.venue,
+      required this.urgency,
+      required this.activityType,
+      required this.numVolunteers,
+      required this.approvalLetter,
+      this.posterUrl,
+      this.organizerEmail});
 
   Map<String, dynamic> toJson() => {
         'activityName': activityName,
@@ -39,7 +40,7 @@ class Event {
         'activityType': activityType,
         'numVolunteers': numVolunteers,
         'approvalLetter': approvalLetter,
-        'posterUrl':
-            posterUrl, // Assuming this is a string URL of the uploaded image
+        'posterUrl': posterUrl,
+        'organizerEmail': organizerEmail,
       };
 }
