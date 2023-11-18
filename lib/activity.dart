@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:intl/intl.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:volunteering/participant_list.dart';
 
 class ActivityPage extends StatefulWidget {
   @override
@@ -74,6 +75,16 @@ class _ActivityPageState extends State<ActivityPage> {
                         rating: averageRating,
                         urgency: urgency,
                         organizerEmail: data['organizerEmail'],
+                        onViewParticipants: () {
+                          // This is the navigation callback
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ParticipantList(eventId: document.id),
+                            ),
+                          );
+                        },
                       );
                     },
                   );
@@ -107,16 +118,19 @@ class EventTile extends StatelessWidget {
   final double rating;
   final String urgency;
   final String organizerEmail;
+  final VoidCallback onViewParticipants;
 
-  EventTile(
-      {required this.eventId,
-      required this.title,
-      required this.description,
-      required this.date,
-      this.imageUrl,
-      required this.rating,
-      required this.urgency,
-      required this.organizerEmail});
+  EventTile({
+    required this.eventId,
+    required this.title,
+    required this.description,
+    required this.date,
+    this.imageUrl,
+    required this.rating,
+    required this.urgency,
+    required this.organizerEmail,
+    required this.onViewParticipants, // Add this parameter
+  });
   Future<int> _getNumberOfRegistrations(String eventId) async {
     QuerySnapshot querySnapshot = await FirebaseFirestore.instance
         .collection('registrations')
@@ -184,17 +198,52 @@ class EventTile extends StatelessWidget {
               children: buildStars(rating),
             ),
             const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () {
-                _showRegistrationDialog(context, eventId, title);
+            FutureBuilder<String>(
+              future: _getUserRole(), // You need to implement this method
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const CircularProgressIndicator();
+                }
+                if (snapshot.hasError) {
+                  return const Text('Error fetching user role');
+                }
+                String userRole = snapshot.data ?? '';
+
+                // Show appropriate button based on user role
+                if (userRole == 'organizer') {
+                  return ElevatedButton(
+                    onPressed: onViewParticipants, // Use the callback here
+                    child: const Text('View Registered Participants'),
+                  );
+                } else {
+                  return ElevatedButton(
+                    onPressed: () {
+                      _showRegistrationDialog(context, eventId, title);
+                    },
+                    child: const Text('Register Here'),
+                  );
+                }
               },
-              child: const Text('Register here'),
             ),
           ],
         ),
       ),
     );
   }
+}
+
+Future<String> _getUserRole() async {
+  // Logic to fetch user role from Firestore or another source
+  // Example: Fetch user document from Firestore and return the 'role' field
+  User? user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    var userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+    return userDoc.data()?['role'] ?? '';
+  }
+  return '';
 }
 
 void _showRegistrationDialog(
