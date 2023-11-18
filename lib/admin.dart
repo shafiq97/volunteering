@@ -48,10 +48,17 @@ class _AdminActivityPageState extends State<AdminActivityPage> {
                     return const Center(child: CircularProgressIndicator());
                   }
 
+                  // Filter documents that are either not approved or do not have the 'approved' field
                   var filteredDocs = snapshot.data!.docs.where((doc) {
-                    return doc['activityName']
-                        .toLowerCase()
-                        .contains(_searchString);
+                    var data = doc.data() as Map<String, dynamic>;
+                    return !_searchString.isNotEmpty ||
+                        data['activityName']
+                            .toLowerCase()
+                            .contains(_searchString);
+                  }).where((doc) {
+                    var data = doc.data() as Map<String, dynamic>;
+                    return data['approved'] == null ||
+                        data['approved'] == false;
                   }).toList();
 
                   return ListView.builder(
