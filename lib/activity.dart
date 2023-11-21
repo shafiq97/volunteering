@@ -14,12 +14,35 @@ class ActivityPage extends StatefulWidget {
 class _ActivityPageState extends State<ActivityPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchString = '';
+  String userRole = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserRole();
+  }
+
+  void _fetchUserRole() async {
+    String role = await _getUserRole();
+    setState(() {
+      userRole = role;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    Query eventsQuery = FirebaseFirestore.instance
-        .collection('events')
-        .where('approved', isEqualTo: true);
+    Query eventsQuery;
+
+    if (userRole == 'organizer') {
+      User? user = FirebaseAuth.instance.currentUser;
+      eventsQuery = FirebaseFirestore.instance
+          .collection('events')
+          .where('organizerId', isEqualTo: user?.uid);
+    } else {
+      eventsQuery = FirebaseFirestore.instance
+          .collection('events')
+          .where('approved', isEqualTo: true);
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Activity Page')),
