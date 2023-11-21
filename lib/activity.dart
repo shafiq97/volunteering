@@ -77,7 +77,7 @@ class _ActivityPageState extends State<ActivityPage> {
                         organizerEmail: data['organizerEmail'],
                         onViewParticipants: () {
                           // This is the navigation callback
-                          Navigator.push(
+                          Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
                               builder: (context) =>

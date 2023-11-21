@@ -132,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // Only show the FAB if the role is organizer
             return FloatingActionButton(
               onPressed: () {
-                Navigator.push(
+                Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => CreateEventPage()),
                 );

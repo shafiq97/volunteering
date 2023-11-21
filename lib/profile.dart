@@ -108,14 +108,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 style: TextStyle(color: Colors.white),
               ),
-              TextFormField(
-                controller: _idController,
-                decoration: InputDecoration(
-                  labelText: 'ID',
-                  labelStyle: TextStyle(color: Colors.white),
-                ),
-                style: TextStyle(color: Colors.white),
-              ),
+              // TextFormField(
+              //   controller: _idController,
+              //   decoration: InputDecoration(
+              //     labelText: 'ID',
+              //     labelStyle: TextStyle(color: Colors.white),
+              //   ),
+              //   style: TextStyle(color: Colors.white),
+              // ),
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {

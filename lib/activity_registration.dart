@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
 import 'package:volunteering/model/Event.dart';
+import 'package:file_picker/file_picker.dart';
 
 class CreateEventPage extends StatefulWidget {
   @override
@@ -24,8 +25,8 @@ class _CreateEventPageState extends State<CreateEventPage> {
   String _urgency = '';
   String _activityType = '';
   int? _numVolunteers;
-  String _approvalLetter = '';
-  File? _imageFile; // Add this line to have a file variable
+  File? _imageFile;
+  File? _approvalLetterFile;
 
   void _showSuccessDialog() {
     showDialog(
@@ -63,13 +64,41 @@ class _CreateEventPageState extends State<CreateEventPage> {
     }
   }
 
+  Future<String?> uploadFileToFirebase(File file) async {
+    try {
+      String fileName = path.basename(file.path);
+      Reference storageRef =
+          FirebaseStorage.instance.ref().child('approval_letters/$fileName');
+      UploadTask uploadTask = storageRef.putFile(file);
+      TaskSnapshot snapshot = await uploadTask;
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      // Handle errors
+      print(e);
+      return null;
+    }
+  }
+
   Future<void> _pickImage() async {
     final ImagePicker _picker = ImagePicker();
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
       setState(() {
-        _imageFile = File(image.path); // Update the _imageFile variable
+        _imageFile = File(image.path);
+      });
+    }
+  }
+
+  Future<void> _pickApprovalLetter() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+    if (result != null) {
+      File file = File(result.files.single.path!);
+
+      setState(() {
+        _approvalLetterFile = file;
       });
     }
   }
@@ -88,14 +117,23 @@ class _CreateEventPageState extends State<CreateEventPage> {
             children: [
               if (_imageFile != null)
                 SizedBox(
-                  height:
-                      200, // Fixed height for the image, you can change it as needed
+                  height: 200,
                   child: Image.file(_imageFile!),
                 )
               else
                 ElevatedButton(
                   onPressed: _pickImage,
                   child: const Text('Upload Poster'),
+                ),
+              if (_approvalLetterFile != null)
+                ElevatedButton(
+                  onPressed: _pickApprovalLetter,
+                  child: const Text('Change Approval Letter'),
+                )
+              else
+                ElevatedButton(
+                  onPressed: _pickApprovalLetter,
+                  child: const Text('Upload Approval Letter'),
                 ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Activity Name'),
@@ -135,9 +173,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
               ),
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(labelText: 'Urgency'),
-                value: _urgency.isNotEmpty
-                    ? _urgency
-                    : null, // Set to null if _urgency is empty
+                value: _urgency.isNotEmpty ? _urgency : null,
                 items: ['High', 'Medium', 'Low']
                     .map((urgency) => DropdownMenuItem(
                           value: urgency,
@@ -192,8 +228,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                 },
               ),
               Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween, // Add this line
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Start Date: '),
                   Text(_startDate != null
@@ -218,8 +253,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
                 ],
               ),
               Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween, // Add this line
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('End Date: '),
                   Text(_endDate != null
@@ -257,31 +291,25 @@ class _CreateEventPageState extends State<CreateEventPage> {
                 },
                 child: const Text('Select Time'),
               ),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Approval Letter'),
-                validator: (value) {
-                  if (value!.isEmpty) {
-                    return 'Please enter the approval letter';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  _approvalLetter = value!;
-                },
-              ),
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    // Save the form data
                     _formKey.currentState!.save();
 
                     String? posterUrl;
                     if (_imageFile != null) {
-                      // Upload image to Firebase Storage and get the URL
                       posterUrl = await uploadImageToFirebase(_imageFile!);
                     }
 
-                    // Create an Event object
+                    String? approvalLetterUrl;
+                    if (_approvalLetterFile != null) {
+                      approvalLetterUrl =
+                          await uploadFileToFirebase(_approvalLetterFile!);
+                      if (approvalLetterUrl == null) {
+                        return;
+                      }
+                    }
+
                     User? user = FirebaseAuth.instance.currentUser;
                     Event event = Event(
                       activityName: _activityName,
@@ -293,12 +321,11 @@ class _CreateEventPageState extends State<CreateEventPage> {
                       urgency: _urgency,
                       activityType: _activityType,
                       numVolunteers: _numVolunteers ?? 0,
-                      approvalLetter: _approvalLetter,
+                      approvalLetter: approvalLetterUrl ?? '',
                       posterUrl: posterUrl,
                       organizerEmail: user!.email,
                     );
 
-                    // Save the event to Firestore
                     await FirebaseFirestore.instance
                         .collection('events')
                         .add(event.toJson());

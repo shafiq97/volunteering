@@ -29,13 +29,13 @@ class _LoginPageState extends State<LoginPage> {
       String role = data['role'];
       if (role == 'admin') {
         // If the user is an admin, navigate to the AdminActivityPage
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => AdminActivityPage()),
         );
       } else {
         // If the user is not an admin, navigate to the HomeScreen
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => HomeScreen()),
         );
